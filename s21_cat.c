@@ -47,6 +47,7 @@ void cat(int argc, char *argv[]) {
         }
         if (flags.E) {flag_E(*buffer);}
         if (flags.T && flag_T(*buffer)) {continue;}
+        if (flags.V) {flag_v(*buffer);}
         chafter = chefore;
         chefore = *buffer;
         if (*buffer == '\0') {
@@ -130,6 +131,16 @@ int flag_T(char buffer) {
     return tab;
 }
 
-int flag_v(char *buffer) {
-
+void flag_v(char buffer) {
+    int currentValue = buffer;
+    if (currentValue == '\n' || currentValue == '\t') {
+    } else if (currentValue < 32 && currentValue >= 0) {
+        printf("^%c", buffer + 64);
+    } else if (currentValue >= -128 && currentValue < -65) {
+        printf("M-^%c", buffer + 192);
+    } else if (currentValue >= -64 && currentValue < -1) {
+        printf("M-%c", buffer + 128); 
+    } else if (currentValue == -65 || currentValue == -1 || currentValue == 127) {
+        printf("^%c", ?);
+    }
 }
