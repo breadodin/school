@@ -29,43 +29,54 @@ void cat(int argc, char *argv[]) {
   }
 
   for (; !errcheck && i < argc; ++i) {
-    FILE *filename = fopen(argv[i], "r");
-    if (filename) {
-      int I_line = 1;
-      int ALL_lines = 1;
-      char chefore = '\n'; // <-
-      char chafter = ' ';  // ->
-      char buffer[BUFFER] = {'\0'};
-
-      while ((*buffer = fgetc(filename)) != EOF) {
-        if (flags.s && flag_s(chefore, chafter, *buffer)) {continue;}
-        if (flags.n) {
-          I_line = flag_n(I_line, &ALL_lines, *buffer);
+    int isEnd = 0;
+    FILE *filename = NULL;
+    if ((filename = fopen(argv[i], "r")) != NULL) {
+        while (isEnd != 1) {
+          isEnd = printResult(filename, flags);
         }
-        if (flags.b) {
-          flag_b(chefore, &ALL_lines, *buffer);
-        }
-        if (flags.E) {flag_E(*buffer);}
-        if (flags.T && flag_T(*buffer)) {continue;}
-        chafter = chefore;
-        chefore = *buffer;
-        if (*buffer == '\0') {
-          fputc(*buffer, stdout);
-        } else {
-          fputs(buffer, stdout);
-          memset(buffer, '\0', BUFFER);
-        }
-      }
-      fclose(filename);
     } else {
       printf("cat: %s: No such file or directory\n", argv[i]);
     }
-    fclose(filename);
   }
   if (errcheck) {
     printf("cat: illegal option -- %s.\nusage: cat [-benstuv] [file ...]\n", argv[i - 1]);
   }
 }
+
+int printResult(FILE* filename, Flags flags) {
+  int I_line = 1;
+  int ALL_lines = 1;
+  int isEnd = 0;
+  char chefore = '\n'; // <-
+  char chafter = ' ';  // ->
+  char buffer = '\0';
+
+  while ((buffer = fgetc(filename)) != EOF) {
+    if (flags.s && flag_s(chefore, chafter, buffer)) {continue;}
+    if (flags.n) {
+      I_line = flag_n(I_line, &ALL_lines, buffer);
+    }
+    if (flags.b) {
+      flag_b(chefore, &ALL_lines,buffer);
+    }
+    if (flags.E) {flag_E(buffer);}
+    if (flags.T && flag_T(buffer)) {continue;}
+    if (flags.v) {flag_v(buffer);}
+    chafter = chefore;
+    chefore = buffer;
+    if (buffer == '\0') {
+      printf("%c", buffer);
+    } else {
+      printf("%c", buffer);
+    }
+  }
+  if (buffer == EOF && feof(filename)) {
+    isEnd = 1;
+  }
+  return isEnd;
+}
+
 int onFlags(Flags *flags) {
   flags->s = 0;
   flags->n = 0;
@@ -73,8 +84,6 @@ int onFlags(Flags *flags) {
   flags->E = 0;
   flags->T = 0;
   flags->v = 0;
-  // flags->e = 0;
-  // flags->t = 0;
   return 1;
 }
 
@@ -93,6 +102,8 @@ int getFlags(char *argv, Flags *flags) {
       flags->T = 1;
     if (strchr(argv, 'E'))
       flags->E = 1;
+    if (strchr(argv, 'v'))
+      flags->v = 1;
   }
   return errcheck;
 }
@@ -130,6 +141,16 @@ int flag_T(char buffer) {
     return tab;
 }
 
-int flag_v(char *buffer) {
-
+void flag_v(char buffer) {
+    int currentValue = buffer;
+    if (currentValue == '\n' || currentValue == '\t') {
+    } else if (currentValue < 32 && currentValue >= 0) {
+        printf("^%c", buffer + 64);
+    } else if (currentValue >= -128 && currentValue < -65) {
+        printf("M-^%c", buffer + 192);
+    } else if (currentValue >= -64 && currentValue < -1) {
+        printf("M-%c", buffer + 128); 
+    } else if (currentValue == -65 || currentValue == -1 || currentValue == 127) {
+        printf("^%c", '?');
+    }
 }
