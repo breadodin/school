@@ -1,4 +1,13 @@
+#include <math.h>
+#include <stdio.h>
 #include "s21_math.h"
+
+int main() {
+  double x = 0.1, result;
+  result = s21_exp(x);
+  printf("Exponential of %.2lf = %.2lf", x, result);
+  return 0;
+}
 
 long double s21_exp(double x) {
   long double result = 1;
